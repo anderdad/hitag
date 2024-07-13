@@ -1,0 +1,6 @@
+{
+    "rainbow_csv.enable_auto_csv_lint": false,
+    "shiny.python.debugJustMyCode": false,
+    "simpleBrowser.focusLockIndicator.enabled": false,
+    "powershell.developer.setExecutionPolicy": false
+}

@@ -1,5 +1,5 @@
-# List of packages you want to ensure are installed
-packages <- c("tidyverse", "camtrapR", "jsonlite", "shiny", "here")
+#start
+packages <- c("tidyverse", "camtrapR", "jsonlite", "shiny", "here", "base64enc")
 
 # Loop through each package and install it if it's not already installed
 for (pkg in packages) {
@@ -14,13 +14,22 @@ library(jsonlite)
 library(shiny)
 library(here)
 library(exiftoolr)
+library(conflicted)
+library(base64enc)
 
+#deal with conflicts
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
 
+#load library files
+source(here("lib", "anderdad_functions.r"))
 
 
 project_folder_path <- "Project_Folder"
-
 image_directory <- "./Project_Folder/images"
+
+promtandprint(project_folder_path, image_directory)
+promtandprint("print what will go into the list now")
 
 # List all JPEG files in the directory and its subdirectories
 image_files <- list.files(
@@ -29,22 +38,15 @@ image_files <- list.files(
                           full.names = TRUE,
                           recursive = TRUE)
 
-print(image_files)
+write.csv(image_files, here("file_list.csv"), row.names = FALSE)
 
-# Read metadata from all JPEG files
-metadata_list <- lapply(image_files, exif_read)
-
-# Test with a smaller subset of image files
+# Read metadata from the first 10 images
 small_subset <- image_files[1:10]
-metadata_list_test <- lapply(small_subset, exif_read)
+metadata_list <- lapply(small_subset, exif_read)
 
-print(small_subset)
 
-write.csv(df, file = here("metatdata.csv"), row.names = FALSE)
-
-print("a.")
 # Extract specific metadata fields and create a data frame
-metadata_summary <- lapply(metadata_list_test, function(metadata) {
+metadata_summary <- lapply(metadata_list, function(metadata) {
   data.frame(
     FileName = metadata$SourceFile,
     DateTimeOriginal = metadata$DateTimeOriginal,
@@ -52,13 +54,20 @@ metadata_summary <- lapply(metadata_list_test, function(metadata) {
   )
 })
 
-print("a.")
+write.csv(shes_so_meta(metadata_summary), here("metadata_summary.csv"), row.names = FALSE)
+
+
+promtandprint("a.")
 # Combine all individual data frames into one
 metadata_df <- do.call(rbind, metadata_summary)
+write.csv(shes_so_meta(metadata_df), here("metadata_DF.csv"), row.names = FALSE)
 
 print("b")
-# Display the first few rows of the data frame
-print(head(metadata_df))
-print("c.")
-print(metadata_df)
-Print("d is for dun :)")
+# Apply the function to each file and combine into a data frame
+metadata_list <- lapply(image_files, extract_metadata)
+metadata_df <- do.call(rbind, lapply(metadata_list, function(x) as.data.frame(t(x), stringsAsFactors = FALSE)))
+
+# Write to CSV
+write.csv(metadata_df, "image_metadata.csv", row.names = FALSE)
+
+print("done")
